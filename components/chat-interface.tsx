@@ -5,7 +5,8 @@ import type React from "react"
 import { useRef, useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { ChevronUp, Send, Sparkles, X } from "lucide-react"
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer"
+import { ChevronUp, Send, Sparkles } from 'lucide-react'
 
 interface Message {
   id: string
@@ -125,16 +126,14 @@ export default function ChatInterface({
       <div className="border-t border-border bg-card/50 backdrop-blur-sm">
         <div className="max-w-4xl mx-auto w-full px-4 py-4 space-y-3">
           <button
-            onClick={() => setShowModelSelector(!showModelSelector)}
+            onClick={() => setShowModelSelector(true)}
             className="w-full flex items-center justify-between px-4 py-2.5 rounded-lg border border-border bg-muted/50 hover:bg-muted transition-colors text-left group"
           >
             <div className="flex items-center gap-2">
               <Sparkles className="w-4 h-4 text-primary" />
               <span className="text-sm font-medium text-foreground">{getAssistantName()}</span>
             </div>
-            <ChevronUp
-              className={`w-4 h-4 text-muted-foreground transition-transform ${showModelSelector ? "rotate-180" : ""}`}
-            />
+            <ChevronUp className="w-4 h-4 text-muted-foreground" />
           </button>
 
           {/* Chat Input */}
@@ -159,95 +158,76 @@ export default function ChatInterface({
           <p className="text-xs text-muted-foreground">Enter to send • Shift+Enter for new line</p>
         </div>
 
-        {/* Model Selector Modal */}
-        {showModelSelector && (
-          <>
-            {/* Modal Background */}
-            <div
-              className="fixed inset-0 bg-black/20 backdrop-blur-sm z-40"
-              onClick={() => setShowModelSelector(false)}
-            />
+        <Drawer open={showModelSelector} onOpenChange={setShowModelSelector}>
+          <DrawerContent className="w-full h-screen">
+            <DrawerHeader className="border-b">
+              <DrawerTitle>Select an AI Model</DrawerTitle>
+            </DrawerHeader>
 
-            {/* Modal Content */}
-            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-4 w-96 max-w-[calc(100vw-2rem)] bg-card border border-border rounded-lg shadow-xl z-50 max-h-96 overflow-hidden flex flex-col">
-              {/* Modal Header */}
-              <div className="px-4 py-3 border-b border-border flex items-center justify-between bg-muted/30">
-                <h3 className="text-sm font-semibold text-foreground">Select an AI Model</h3>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setShowModelSelector(false)}
-                  className="hover:bg-muted -mr-2"
-                >
-                  <X className="w-4 h-4" />
-                </Button>
-              </div>
+            {/* Drawer Content - Categories */}
+            <div className="overflow-y-auto flex-1 px-4 md:px-8 py-6">
+              <div className="max-w-2xl mx-auto space-y-4">
+                {Object.entries(categories).map(([category, assistants]) => (
+                  <div key={category}>
+                    {/* Category Header */}
+                    <button
+                      onClick={() => setExpandedCategory(expandedCategory === category ? null : category)}
+                      className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-muted transition-colors text-left"
+                    >
+                      <span className="text-sm font-semibold text-foreground uppercase tracking-wider">
+                        {category}
+                      </span>
+                      <ChevronUp
+                        className={`w-4 h-4 text-muted-foreground transition-transform ${
+                          expandedCategory === category ? "rotate-180" : ""
+                        }`}
+                      />
+                    </button>
 
-              {/* Modal Content - Categories */}
-              <div className="overflow-y-auto flex-1">
-                <div className="p-3 space-y-3">
-                  {Object.entries(categories).map(([category, assistants]) => (
-                    <div key={category}>
-                      {/* Category Header */}
-                      <button
-                        onClick={() => setExpandedCategory(expandedCategory === category ? null : category)}
-                        className="w-full flex items-center justify-between p-2.5 rounded hover:bg-muted transition-colors text-left"
-                      >
-                        <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                          {category}
-                        </span>
-                        <ChevronUp
-                          className={`w-3 h-3 text-muted-foreground transition-transform ${
-                            expandedCategory === category ? "rotate-180" : ""
-                          }`}
-                        />
-                      </button>
-
-                      {/* Assistants List */}
-                      {expandedCategory === category && (
-                        <div className="space-y-1.5 mt-2 ml-2">
-                          {assistants.map((assistant) => (
-                            <button
-                              key={assistant.id}
-                              onClick={() => handleSelectAssistant(assistant.id)}
-                              className={`w-full text-left px-3 py-2 rounded-md transition-all ${
-                                selectedAssistant === assistant.id
-                                  ? "bg-primary text-primary-foreground"
-                                  : "hover:bg-muted text-foreground"
-                              }`}
-                            >
-                              <div className="flex items-start gap-2">
-                                <div
-                                  className={`w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 text-xs font-bold ${
-                                    selectedAssistant === assistant.id ? "bg-primary-foreground/20" : "bg-muted"
+                    {/* Assistants List */}
+                    {expandedCategory === category && (
+                      <div className="space-y-2 mt-3 ml-3">
+                        {assistants.map((assistant) => (
+                          <button
+                            key={assistant.id}
+                            onClick={() => handleSelectAssistant(assistant.id)}
+                            className={`w-full text-left px-4 py-3 rounded-lg transition-all ${
+                              selectedAssistant === assistant.id
+                                ? "bg-primary text-primary-foreground"
+                                : "hover:bg-muted text-foreground"
+                            }`}
+                          >
+                            <div className="flex items-start gap-3">
+                              <div
+                                className={`w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 text-xs font-bold ${
+                                  selectedAssistant === assistant.id ? "bg-primary-foreground/20" : "bg-muted"
+                                }`}
+                              >
+                                {selectedAssistant === assistant.id && "✓"}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-semibold leading-tight">{assistant.name}</p>
+                                <p
+                                  className={`text-sm leading-snug mt-1 ${
+                                    selectedAssistant === assistant.id
+                                      ? "text-primary-foreground/80"
+                                      : "text-muted-foreground"
                                   }`}
                                 >
-                                  {selectedAssistant === assistant.id && "✓"}
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                  <p className="text-xs font-semibold leading-tight">{assistant.name}</p>
-                                  <p
-                                    className={`text-xs leading-tight mt-0.5 ${
-                                      selectedAssistant === assistant.id
-                                        ? "text-primary-foreground/80"
-                                        : "text-muted-foreground"
-                                    }`}
-                                  >
-                                    {assistant.description}
-                                  </p>
-                                </div>
+                                  {assistant.description}
+                                </p>
                               </div>
-                            </button>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ))}
               </div>
             </div>
-          </>
-        )}
+          </DrawerContent>
+        </Drawer>
       </div>
     </div>
   )
